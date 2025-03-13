@@ -191,6 +191,21 @@ class ProductController {
                 throw new \Exception('Invalid request');
             }
 
+            // Check if product has any orders
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM order_items 
+                WHERE product_id = ?
+            ");
+            $stmt->execute([$_POST['id']]);
+            $hasOrders = $stmt->fetchColumn() > 0;
+
+            if ($hasOrders) {
+                // Return JSON response for AJAX request
+                header('Content-Type: application/json');
+                echo json_encode(['error' => true, 'message' => 'Cannot delete product because it has existing orders']);
+                exit;
+            }
+
             // Get product image before deleting
             $stmt = $this->db->prepare("SELECT image FROM products WHERE id = ?");
             $stmt->execute([$_POST['id']]);
@@ -208,12 +223,15 @@ class ProductController {
             $stmt = $this->db->prepare("DELETE FROM products WHERE id = ?");
             $stmt->execute([$_POST['id']]);
 
-            $_SESSION['success'] = 'Product deleted successfully';
+            // Return JSON response for AJAX request
+            header('Content-Type: application/json');
+            echo json_encode(['error' => false, 'message' => 'Product deleted successfully']);
+            exit;
         } catch (\Exception $e) {
-            $_SESSION['error'] = $e->getMessage();
+            // Return JSON response for AJAX request
+            header('Content-Type: application/json');
+            echo json_encode(['error' => true, 'message' => $e->getMessage()]);
+            exit;
         }
-
-        header('Location: /php-sneakers-store/public/admin/products');
-        exit;
     }
 } 

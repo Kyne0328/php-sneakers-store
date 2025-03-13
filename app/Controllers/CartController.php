@@ -118,6 +118,14 @@ class CartController {
     public function add() {
         $this->validateCSRF();
         
+        // Check if user is logged in
+        if (!isset($_SESSION['user_id'])) {
+            $_SESSION['error'] = 'Please login to add items to cart';
+            $_SESSION['redirect_after_login'] = $_SERVER['HTTP_REFERER'];
+            header('Location: /php-sneakers-store/public/login');
+            exit;
+        }
+
         $product_id = filter_var($_POST['product_id'] ?? 0, FILTER_SANITIZE_NUMBER_INT);
         $quantity = filter_var($_POST['quantity'] ?? 1, FILTER_SANITIZE_NUMBER_INT);
 
@@ -133,25 +141,18 @@ class CartController {
             exit;
         }
 
-        if (isset($_SESSION['user_id'])) {
-            // Add to database cart
-            try {
-                $stmt = $this->db->prepare("
-                    INSERT INTO cart (user_id, product_id, quantity)
-                    VALUES (?, ?, ?)
-                    ON DUPLICATE KEY UPDATE quantity = LEAST(quantity + ?, 10)
-                ");
-                $stmt->execute([$_SESSION['user_id'], $product_id, $quantity, $quantity]);
-                $_SESSION['success'] = 'Product added to cart successfully';
-            } catch (\PDOException $e) {
-                $_SESSION['error'] = 'Failed to add product to cart';
-                error_log($e->getMessage());
-            }
-        } else {
-            // Add to session cart
-            $current_quantity = $_SESSION['cart'][$product_id] ?? 0;
-            $_SESSION['cart'][$product_id] = min($current_quantity + $quantity, 10);
+        // Add to database cart
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO cart (user_id, product_id, quantity)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE quantity = LEAST(quantity + ?, 10)
+            ");
+            $stmt->execute([$_SESSION['user_id'], $product_id, $quantity, $quantity]);
             $_SESSION['success'] = 'Product added to cart successfully';
+        } catch (\PDOException $e) {
+            $_SESSION['error'] = 'Failed to add product to cart';
+            error_log($e->getMessage());
         }
 
         header('Location: ' . $_SERVER['HTTP_REFERER']);

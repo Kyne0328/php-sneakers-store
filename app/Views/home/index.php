@@ -33,13 +33,19 @@
                                 <p class="card-text text-muted flex-grow-1"><?php echo $product['description']; ?></p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <span class="h5 mb-0 text-dark">$<?php echo number_format($product['price'], 2); ?></span>
-                                    <form action="/php-sneakers-store/public/cart/add" method="POST">
-                                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                                        <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-cart-plus"></i> Add to Cart
-                                        </button>
-                                    </form>
+                                    <?php if (isset($_SESSION['user_id'])): ?>
+                                        <form action="/php-sneakers-store/public/cart/add" method="POST">
+                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                                            <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-cart-plus"></i> Add to Cart
+                                            </button>
+                                        </form>
+                                    <?php else: ?>
+                                        <a href="/php-sneakers-store/public/login" class="btn btn-outline-primary">
+                                            <i class="bi bi-box-arrow-in-right"></i> Login to Buy
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

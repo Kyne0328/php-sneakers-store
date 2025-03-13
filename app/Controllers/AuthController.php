@@ -69,6 +69,15 @@ class AuthController {
             // Regenerate session ID to prevent session fixation
             session_regenerate_id(true);
             
+            // Check if there's a redirect URL stored in session
+            if (isset($_SESSION['redirect_after_login'])) {
+                $redirect_url = $_SESSION['redirect_after_login'];
+                unset($_SESSION['redirect_after_login']);
+                header('Location: ' . $redirect_url);
+                exit;
+            }
+            
+            // Default redirect based on user role
             header('Location: ' . ($user['is_admin'] ? '/php-sneakers-store/public/admin' : '/php-sneakers-store/public/'));
             exit;
         }

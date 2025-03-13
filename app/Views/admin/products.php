@@ -90,36 +90,15 @@
                                                     data-image="<?php echo htmlspecialchars($product['image']); ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-danger" 
+                                            <button type="button" class="btn btn-sm btn-danger delete-product" 
                                                     data-bs-toggle="modal" 
-                                                    data-bs-target="#deleteProductModal<?php echo $product['id']; ?>">
+                                                    data-bs-target="#deleteProductModal"
+                                                    data-id="<?php echo $product['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($product['name']); ?>">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
-
-                                    <!-- Delete Product Modal -->
-                                    <div class="modal fade" id="deleteProductModal<?php echo $product['id']; ?>" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Delete Product</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p>Are you sure you want to delete "<?php echo htmlspecialchars($product['name']); ?>"?</p>
-                                                    <p class="text-danger"><small>This action cannot be undone.</small></p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <form action="/php-sneakers-store/public/admin/products/delete" method="POST">
-                                                        <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
-                                                        <button type="submit" class="btn btn-danger">Delete Product</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -127,6 +106,32 @@
                 </div>
             </div>
         </main>
+    </div>
+</div>
+
+<!-- Delete Product Modal -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="delete_product_error" class="alert alert-danger d-none mb-3">
+                    This product cannot be deleted because it has existing orders. To maintain order history integrity, products with orders cannot be deleted.
+                </div>
+                <p>Are you sure you want to delete "<span id="delete_product_name"></span>"?</p>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/php-sneakers-store/public/admin/products/delete" method="POST" id="deleteProductForm">
+                    <input type="hidden" name="id" id="delete_product_id">
+                    <button type="submit" class="btn btn-danger">Delete Product</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -237,6 +242,43 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_stock').value = stock;
             document.getElementById('edit_current_image').src = image;
         });
+    });
+
+    // Handle delete product button clicks
+    document.querySelectorAll('.delete-product').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+
+            // Reset error message
+            document.getElementById('delete_product_error').classList.add('d-none');
+
+            // Populate the delete modal with product data
+            document.getElementById('delete_product_id').value = id;
+            document.getElementById('delete_product_name').textContent = name;
+        });
+    });
+
+    // Handle delete product form submission
+    document.getElementById('deleteProductForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this)
+            });
+            
+            const result = await response.json();
+            
+            if (result.error) {
+                document.getElementById('delete_product_error').classList.remove('d-none');
+            } else {
+                window.location.reload();
+            }
+        } catch (error) {
+            document.getElementById('delete_product_error').classList.remove('d-none');
+        }
     });
 });
 </script>

@@ -41,7 +41,19 @@ class ProductController {
 
     public function show($id) {
         try {
-            $stmt = $this->db->prepare("SELECT * FROM products WHERE id = ?");
+            // Validate ID
+            if (!is_numeric($id) || $id <= 0) {
+                $_SESSION['error'] = "Invalid product ID.";
+                header('Location: /php-sneakers-store/public/products');
+                exit;
+            }
+
+            // Get product with stock check
+            $stmt = $this->db->prepare("
+                SELECT * FROM products 
+                WHERE id = ? 
+                LIMIT 1
+            ");
             $stmt->execute([$id]);
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -51,9 +63,20 @@ class ProductController {
                 exit;
             }
 
+            // Get related products (optional)
+            $stmt = $this->db->prepare("
+                SELECT * FROM products 
+                WHERE id != ? AND stock > 0 
+                ORDER BY RAND() 
+                LIMIT 3
+            ");
+            $stmt->execute([$id]);
+            $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
             require_once __DIR__ . '/../Views/products/show.php';
         } catch (PDOException $e) {
-            $_SESSION['error'] = "Error fetching product: " . $e->getMessage();
+            error_log("Error fetching product: " . $e->getMessage());
+            $_SESSION['error'] = "An error occurred while fetching the product.";
             header('Location: /php-sneakers-store/public/products');
             exit;
         }
