@@ -1,0 +1,19 @@
+.product-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.product-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Prevent the Add to Cart button from triggering the card click */
+.product-card form {
+    position: relative;
+    z-index: 2;
+} 
