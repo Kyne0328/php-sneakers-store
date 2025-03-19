@@ -3,7 +3,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    <span>&copy; 2024 Sneakers Store. All rights reserved.</span>
+                    <span>&copy; 2024 Sneaker House. All rights reserved.</span>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>

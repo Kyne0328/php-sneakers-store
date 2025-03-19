@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sneakers Store</title>
+    <title>Sneaker House</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
@@ -11,7 +11,9 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">Sneakers Store</a>
+            <a class="navbar-brand" href="/">
+                <img src="/php-sneakers-store/images/logo.png" alt="Sneaker House Logo" height="40">
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -104,13 +106,13 @@
                 </div>
                 <div class="col-md-4">
                     <h5><i class="fa-solid fa-address-card"></i> Contact Us</h5>
-                    <p><i class="fa-solid fa-envelope"></i> Email: info@sneakersstore.com<br>
+                    <p><i class="fa-solid fa-envelope"></i> Email: info@sneakerhouse.com<br>
                     <i class="fa-solid fa-phone"></i> Phone: (555) 123-4567</p>
                 </div>
             </div>
             <div class="row mt-3">
                 <div class="col text-center">
-                    <p class="mb-0">&copy; <?php echo date('Y'); ?> Sneakers Store. All rights reserved.</p>
+                    <p class="mb-0">&copy; <?php echo date('Y'); ?> Sneaker House. All rights reserved.</p>
                 </div>
             </div>
         </div>
