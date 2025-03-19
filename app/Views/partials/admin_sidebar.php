@@ -2,6 +2,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="/php-sneakers-store/public/admin">
+            <img src="/php-sneakers-store/images/logo.png" alt="Sneaker House Logo" height="35" class="me-2">
             <span>Admin Panel</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">

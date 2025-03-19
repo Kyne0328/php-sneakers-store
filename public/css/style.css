@@ -37,6 +37,14 @@ main {
     font-size: 1.5rem;
 }
 
+.navbar-brand img {
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover img {
+    transform: scale(1.05);
+}
+
 .nav-link {
     padding: 0.5rem 1rem;
 }
@@ -99,6 +107,15 @@ footer a {
 footer a:hover {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
+}
+
+footer img {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    transition: transform 0.3s ease;
+}
+
+footer img:hover {
+    transform: scale(1.05);
 }
 
 /* Alerts */

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sneaker House</title>
+    <link rel="icon" href="/php-sneakers-store/images/logo.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
@@ -94,6 +95,9 @@
             <div class="row">
                 <div class="col-md-4">
                     <h5><i class="fa-solid fa-store"></i> About Us</h5>
+                    <div class="mb-3">
+                        <img src="/php-sneakers-store/images/logo.png" alt="Sneaker House Logo" height="50">
+                    </div>
                     <p>Your premier destination for the latest and greatest sneakers.</p>
                 </div>
                 <div class="col-md-4">

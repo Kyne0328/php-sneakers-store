@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sneaker House<?php echo (strpos($_SERVER['REQUEST_URI'], '/admin') !== false) ? ' - Admin Dashboard' : ''; ?></title>
+    <link rel="icon" href="/php-sneakers-store/images/logo.png" type="image/png">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -27,7 +28,8 @@
                     <i class="bi bi-list fs-4"></i>
                 </button>
                 <a class="navbar-brand" href="/php-sneakers-store/public/admin">
-                    <i class="bi bi-shield-lock"></i> Admin Dashboard
+                    <img src="/php-sneakers-store/images/logo.png" alt="Sneaker House Logo" height="40" class="me-2">
+                    Admin Dashboard
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
                     <span class="navbar-toggler-icon"></span>
