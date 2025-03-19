@@ -59,6 +59,8 @@
                                     <th>Customer</th>
                                     <th>Total</th>
                                     <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Tracking</th>
                                     <th>Date</th>
                                     <th>Actions</th>
                                 </tr>
@@ -83,6 +85,20 @@
                                                 <?php echo ucfirst($order['status']); ?>
                                             </span>
                                         </td>
+                                        <td>
+                                            <span class="badge bg-<?php 
+                                                switch($order['payment_status'] ?? 'pending') {
+                                                    case 'paid': echo 'success'; break;
+                                                    case 'failed': echo 'danger'; break;
+                                                    case 'refunded': echo 'info'; break;
+                                                    case 'pending': 
+                                                    default: echo 'warning';
+                                                }
+                                            ?>">
+                                                <?php echo ucfirst($order['payment_status'] ?? 'Pending'); ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo !empty($order['tracking_number']) ? htmlspecialchars($order['tracking_number']) : 'Not available'; ?></td>
                                         <td><?php echo date('Y-m-d H:i', strtotime($order['created_at'])); ?></td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-info view-order" 
@@ -97,6 +113,9 @@
                                                     data-shipping-state="<?php echo htmlspecialchars($order['shipping_state'] ?? ''); ?>"
                                                     data-shipping-zip="<?php echo htmlspecialchars($order['shipping_zip'] ?? ''); ?>"
                                                     data-total-amount="<?php echo $order['total_amount'] ?? '0.00'; ?>"
+                                                    data-status="<?php echo ucfirst($order['status'] ?? 'Pending'); ?>"
+                                                    data-payment-status="<?php echo ucfirst($order['payment_status'] ?? 'Pending'); ?>"
+                                                    data-tracking-number="<?php echo htmlspecialchars($order['tracking_number'] ?? ''); ?>"
                                                     data-items='<?php echo json_encode($order['items'] ?? []); ?>'>
                                                 <i class="bi bi-eye"></i>
                                             </button>
@@ -105,7 +124,9 @@
                                                     data-bs-target="#updateStatusModal"
                                                     data-id="<?php echo $order['id']; ?>"
                                                     data-order-number="<?php echo $order['id']; ?>"
-                                                    data-status="<?php echo $order['status']; ?>">
+                                                    data-status="<?php echo $order['status']; ?>"
+                                                    data-payment-status="<?php echo $order['payment_status'] ?? 'pending'; ?>"
+                                                    data-tracking-number="<?php echo htmlspecialchars($order['tracking_number'] ?? ''); ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         </td>
@@ -145,6 +166,22 @@
                             <span id="shipping_city"></span>, 
                             <span id="shipping_state"></span> 
                             <span id="shipping_zip"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Order Status</h6>
+                        <p>
+                            <strong>Status:</strong> <span id="order_status"></span><br>
+                            <strong>Payment:</strong> <span id="payment_status"></span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Shipping Information</h6>
+                        <p>
+                            <strong>Tracking Number:</strong> <span id="tracking_number">Not available</span>
                         </p>
                     </div>
                 </div>
@@ -204,6 +241,19 @@
                             <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label for="payment_status" class="form-label">Payment Status</label>
+                        <select class="form-select" id="payment_status" name="payment_status" required>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="failed">Failed</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tracking_number" class="form-label">Tracking Number</label>
+                        <input type="text" class="form-control" id="tracking_number" name="tracking_number" placeholder="Enter tracking number">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -220,6 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.view-order').forEach(button => {
         button.addEventListener('click', function() {
             const data = this.dataset;
+            console.log('View Order Data:', data);
             
             // Populate the view modal with order data
             document.getElementById('order_id').textContent = data.id;
@@ -231,6 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('shipping_state').textContent = data.shippingState;
             document.getElementById('shipping_zip').textContent = data.shippingZip;
             document.getElementById('total_amount').textContent = parseFloat(data.totalAmount).toFixed(2);
+            document.getElementById('order_status').textContent = data.status;
+            document.getElementById('payment_status').textContent = data.paymentStatus;
+            document.getElementById('tracking_number').textContent = data.trackingNumber || 'Not available';
 
             // Populate order items
             const items = JSON.parse(data.items);
@@ -267,11 +321,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.update-status').forEach(button => {
         button.addEventListener('click', function() {
             const data = this.dataset;
+            console.log('Update Status Data:', data);
             
             // Populate the update modal with order data
             document.getElementById('update_order_id').value = data.id;
             document.getElementById('update_order_number').textContent = '#' + data.orderNumber;
             document.getElementById('status').value = data.status;
+            document.getElementById('payment_status').value = data.paymentStatus;
+            document.getElementById('tracking_number').value = data.trackingNumber || '';
         });
     });
 });

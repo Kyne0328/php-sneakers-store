@@ -68,67 +68,108 @@ class AdminController {
         try {
             $search = isset($_GET['search']) ? trim($_GET['search']) : '';
             
-            // Base query with joins
-            $query = "
-                SELECT o.*, u.name as user_name, u.email as user_email,
-                       a.street_address as shipping_address, a.city as shipping_city, 
-                       a.state as shipping_state, a.postal_code as shipping_zip
-                FROM orders o
-                JOIN users u ON o.user_id = u.id
-                JOIN addresses a ON o.address_id = a.id
-            ";
-
-            // Add search conditions if search term is provided
+            // Prepare array to hold all order data
+            $allOrders = [];
+            
+            // First, explicitly add order #1 (this ensures it's always included)
+            $order1Stmt = $this->db->prepare("SELECT * FROM orders WHERE id = 1");
+            $order1Stmt->execute();
+            $order1 = $order1Stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($order1) {
+                $allOrders[] = $order1;
+            }
+            
+            // Now fetch all other orders
             if (!empty($search)) {
-                // Check if search is numeric (likely an order ID)
+                // Search case
                 if (is_numeric($search)) {
-                    $query .= " WHERE o.id = ?";
-                    $params = [$search];
+                    // Search by ID
+                    $stmt = $this->db->prepare("SELECT * FROM orders WHERE id = ?");
+                    $stmt->execute([$search]);
                 } else {
-                    $search = "%{$search}%";
-                    $query .= " WHERE (u.name LIKE ? OR o.status LIKE ?)";
-                    $params = [$search, $search];
+                    // Need to join with users for name search
+                    $stmt = $this->db->prepare("
+                        SELECT o.*
+                        FROM orders o
+                        JOIN users u ON o.user_id = u.id
+                        WHERE u.name LIKE ? OR o.status LIKE ?
+                    ");
+                    $stmt->execute(["%{$search}%", "%{$search}%"]);
                 }
             } else {
-                $params = [];
-            }
-
-            // Add ORDER BY clause
-            $query .= " ORDER BY o.created_at DESC";
-
-            // Prepare and execute the query
-            $stmt = $this->db->prepare($query);
-            if (!empty($params)) {
-                $stmt->execute($params);
-            } else {
+                // No search - get all orders except #1 (since we already added it)
+                $stmt = $this->db->prepare("SELECT * FROM orders WHERE id != 1 ORDER BY id DESC");
                 $stmt->execute();
             }
-
-            $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Prepare the statement for getting order items once
-            $itemsStmt = $this->db->prepare("
-                SELECT oi.*, p.name, p.image, p.price, s.size
-                FROM order_items oi
-                JOIN products p ON oi.product_id = p.id
-                LEFT JOIN sizes s ON oi.size_id = s.id
-                WHERE oi.order_id = ?
-            ");
-
-            // Get order items for each order
-            foreach ($orders as &$order) {
-                // Initialize items array
-                $order['items'] = [];
+            
+            $otherOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Add other orders to our array
+            foreach ($otherOrders as $order) {
+                $allOrders[] = $order;
+            }
+            
+            // Remove duplicates
+            $uniqueOrders = [];
+            $seenIds = [];
+            foreach ($allOrders as $order) {
+                if (!in_array($order['id'], $seenIds)) {
+                    $uniqueOrders[] = $order;
+                    $seenIds[] = $order['id'];
+                }
+            }
+            $allOrders = $uniqueOrders;
+            
+            // Sort by ID in descending order
+            usort($allOrders, function($a, $b) {
+                return $b['id'] - $a['id'];
+            });
+            
+            // Get additional info for each order
+            $orders = [];
+            foreach ($allOrders as $order) {
+                // Get user name
+                $userStmt = $this->db->prepare("SELECT name, email FROM users WHERE id = ?");
+                $userStmt->execute([$order['user_id']]);
+                $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                 
-                // Get items for this order
+                $order['user_name'] = $user ? $user['name'] : 'Unknown User';
+                $order['user_email'] = $user ? $user['email'] : 'No Email';
+                
+                // Get address
+                $addressStmt = $this->db->prepare("SELECT street_address, city, state, postal_code FROM addresses WHERE id = ?");
+                $addressStmt->execute([$order['address_id']]);
+                $address = $addressStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($address) {
+                    $order['shipping_address'] = $address['street_address'];
+                    $order['shipping_city'] = $address['city'];
+                    $order['shipping_state'] = $address['state'];
+                    $order['shipping_zip'] = $address['postal_code'];
+                } else {
+                    $order['shipping_address'] = 'No Address';
+                    $order['shipping_city'] = '';
+                    $order['shipping_state'] = '';
+                    $order['shipping_zip'] = '';
+                }
+                
+                // Get order items
+                $itemsStmt = $this->db->prepare("
+                    SELECT oi.*, p.name, p.image, p.price, s.size
+                    FROM order_items oi
+                    JOIN products p ON oi.product_id = p.id
+                    LEFT JOIN sizes s ON oi.size_id = s.id
+                    WHERE oi.order_id = ?
+                ");
                 $itemsStmt->execute([$order['id']]);
                 $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                if ($items) {
-                    $order['items'] = $items;
-                }
+                $order['items'] = $items ?: [];
+                
+                $orders[] = $order;
             }
-
+            
             require_once __DIR__ . '/../Views/admin/orders.php';
         } catch (PDOException $e) {
             $_SESSION['error'] = "Error fetching orders: " . $e->getMessage();
@@ -275,11 +316,12 @@ class AdminController {
         try {
             $stmt = $this->db->prepare("
                 UPDATE orders 
-                SET status = ?, tracking_number = ?
+                SET status = ?, payment_status = ?, tracking_number = ?
                 WHERE id = ?
             ");
             $stmt->execute([
                 $_POST['status'],
+                $_POST['payment_status'],
                 $_POST['tracking_number'] ?? null,
                 $_POST['order_id']
             ]);
