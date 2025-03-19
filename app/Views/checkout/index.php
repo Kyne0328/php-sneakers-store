@@ -120,7 +120,7 @@
                                 <h6 class="mb-0"><?php echo $item['name']; ?></h6>
                                 <small class="text-muted">Qty: <?php echo $item['quantity']; ?></small>
                             </div>
-                            <span>$<?php echo number_format($item['subtotal'], 2); ?></span>
+                            <span>₱<?php echo number_format($item['subtotal'], 2); ?></span>
                         </div>
                     <?php endforeach; ?>
 
@@ -128,15 +128,15 @@
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Subtotal</span>
-                        <span>$<?php echo number_format($total - ($total >= 100 ? 0 : 10), 2); ?></span>
+                        <span>₱<?php echo number_format($total - ($total >= 100 ? 0 : 10), 2); ?></span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Shipping</span>
-                        <span><?php echo $total >= 100 ? 'Free' : '$10.00'; ?></span>
+                        <span><?php echo $total >= 100 ? 'Free' : '₱10.00'; ?></span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <strong>Total</strong>
-                        <strong>$<?php echo number_format($total, 2); ?></strong>
+                        <strong>₱<?php echo number_format($total, 2); ?></strong>
                     </div>
                 </div>
             </div>

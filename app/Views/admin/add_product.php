@@ -39,6 +39,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="stock" class="form-label">Stock</label>
                                 <input type="number" class="form-control" id="stock" name="stock" min="0" required>
+                                <small class="text-muted">Note: You can add size variants after creating the product.</small>
                             </div>
                         </div>
 

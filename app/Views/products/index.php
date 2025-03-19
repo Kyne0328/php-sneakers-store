@@ -52,20 +52,13 @@
                                 <h5 class="card-title text-dark"><?php echo $product['name']; ?></h5>
                                 <p class="card-text text-muted flex-grow-1"><?php echo $product['description']; ?></p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <span class="h5 mb-0 text-dark">$<?php echo number_format($product['price'], 2); ?></span>
-                                    <?php if (isset($_SESSION['user_id'])): ?>
-                                        <form action="/php-sneakers-store/public/cart/add" method="POST">
-                                            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                                            <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="bi bi-cart-plus"></i> Add to Cart
-                                            </button>
-                                        </form>
-                                    <?php else: ?>
-                                        <a href="/php-sneakers-store/public/login" class="btn btn-outline-primary">
-                                            <i class="bi bi-box-arrow-in-right"></i> Login to Buy
-                                        </a>
-                                    <?php endif; ?>
+                                    <span class="h5 mb-0 text-dark">₱<?php echo number_format($product['price'], 2); ?></span>
+                                    <span class="badge bg-<?php echo $product['stock'] > 0 ? 'success' : 'danger'; ?>">
+                                        <?php echo $product['stock'] > 0 ? 'In Stock' : 'Out of Stock'; ?>
+                                    </span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">Click to view details & select size</small>
                                 </div>
                             </div>
                         </div>

@@ -5,8 +5,8 @@
         <?php require_once __DIR__ . '/../partials/admin_sidebar.php'; ?>
 
         <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <main class="col-md-9 col-lg-10 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-4 pb-3 mb-3 border-bottom">
                 <h1 class="h2">Manage Users</h1>
             </div>
 
@@ -35,7 +35,7 @@
                 <div class="col-md-6">
                     <form action="/php-sneakers-store/public/admin/users" method="GET" class="d-flex">
                         <div class="input-group">
-                            <input type="text" name="search" class="form-control" placeholder="Search users by name or email..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                            <input type="text" name="search" class="form-control" placeholder="Search users by name, email, or role..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                             <button class="btn btn-outline-primary" type="submit">
                                 <i class="bi bi-search"></i>
                             </button>
@@ -45,6 +45,16 @@
                                 </a>
                             <?php endif; ?>
                         </div>
+                    </form>
+                </div>
+                <div class="col-md-3">
+                    <form action="/php-sneakers-store/public/admin/users" method="GET" class="d-flex">
+                        <input type="hidden" name="search" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        <select name="role" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Roles</option>
+                            <option value="admin" <?php echo isset($_GET['role']) && $_GET['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                            <option value="user" <?php echo isset($_GET['role']) && $_GET['role'] === 'user' ? 'selected' : ''; ?>>User</option>
+                        </select>
                     </form>
                 </div>
             </div>
@@ -199,5 +209,75 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+    .card {
+        border: none;
+        transition: transform 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .table th {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .badge {
+        padding: 0.5em 0.8em;
+        font-weight: 500;
+    }
+
+    @media (min-width: 768px) {
+        main {
+            margin-left: 0 !important;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto !important;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        
+        .col-md-9.col-lg-10 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .container-fluid .row > .col-md-9.col-lg-10 {
+            margin: 0 auto;
+        }
+    }
+
+    .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+        justify-content: center;
+    }
+    
+    /* Modal styling */
+    .modal-backdrop {
+        opacity: 0.5 !important;
+    }
+
+    .modal {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-dialog {
+        margin: 1.75rem auto;
+        max-width: 500px;
+    }
+</style>
 
 <?php require_once __DIR__ . '/../partials/footer.php'; ?> 

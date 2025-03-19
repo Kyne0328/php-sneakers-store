@@ -110,7 +110,6 @@
         </nav>
     <?php endif; ?>
     
-    <div class="container mt-5 pt-4">
     <?php if (strpos($_SERVER['REQUEST_URI'], '/admin') !== false): ?>
     <!-- Admin-specific JavaScript -->
     <script>
@@ -156,6 +155,5 @@
         });
     </script>
     <?php endif; ?>
-    </div>
 </body>
 </html> 

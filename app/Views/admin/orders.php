@@ -5,8 +5,8 @@
         <?php require_once __DIR__ . '/../partials/admin_sidebar.php'; ?>
 
         <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <main class="col-md-9 col-lg-10 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-4 pb-3 mb-3 border-bottom">
                 <h1 class="h2">Orders</h1>
             </div>
 
@@ -30,6 +30,25 @@
                 </div>
             <?php endif; ?>
 
+            <!-- Search Bar -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <form action="/php-sneakers-store/public/admin/orders" method="GET" class="d-flex">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search orders by ID, customer name, or status..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            <?php if (isset($_GET['search'])): ?>
+                                <a href="/php-sneakers-store/public/admin/orders" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-lg"></i> Clear
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -49,7 +68,7 @@
                                     <tr>
                                         <td>#<?php echo htmlspecialchars($order['id']); ?></td>
                                         <td><?php echo htmlspecialchars($order['user_name']); ?></td>
-                                        <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                        <td>₱<?php echo number_format($order['total_amount'], 2); ?></td>
                                         <td>
                                             <span class="badge bg-<?php 
                                                 switch($order['status']) {
@@ -136,6 +155,7 @@
                         <thead>
                             <tr>
                                 <th>Product</th>
+                                <th>Size</th>
                                 <th>Price</th>
                                 <th>Quantity</th>
                                 <th>Subtotal</th>
@@ -145,8 +165,8 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                                <td><strong>$<span id="total_amount"></span></strong></td>
+                                <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                <td>₱<span id="total_amount"></span></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -230,14 +250,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span>${item.name}</span>
                             </div>
                         </td>
-                        <td>$${parseFloat(item.price).toFixed(2)}</td>
+                        <td>${item.size || 'N/A'}</td>
+                        <td>₱${parseFloat(item.price).toFixed(2)}</td>
                         <td>${item.quantity}</td>
-                        <td>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                        <td>₱${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
                     `;
                     tbody.appendChild(row);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">No items found for this order.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No items found for this order.</td></tr>';
             }
         });
     });
@@ -255,5 +276,75 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+    .card {
+        border: none;
+        transition: transform 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .table th {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .badge {
+        padding: 0.5em 0.8em;
+        font-weight: 500;
+    }
+
+    @media (min-width: 768px) {
+        main {
+            margin-left: 0 !important;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto !important;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        
+        .col-md-9.col-lg-10 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .container-fluid .row > .col-md-9.col-lg-10 {
+            margin: 0 auto;
+        }
+    }
+
+    .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+        justify-content: center;
+    }
+    
+    /* Modal styling */
+    .modal-backdrop {
+        opacity: 0.5 !important;
+    }
+
+    .modal {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-dialog {
+        margin: 1.75rem auto;
+        max-width: 500px;
+    }
+</style>
 
 <?php require_once __DIR__ . '/../partials/footer.php'; ?> 

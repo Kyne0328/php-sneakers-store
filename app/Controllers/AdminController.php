@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use PDO;
+use PDOException;
 
 class AdminController {
     private $db;
@@ -63,27 +65,126 @@ class AdminController {
     }
 
     public function orders() {
-        // Get all orders with user and address details
-        $orders = $this->db->query("
-            SELECT o.*, u.name as user_name, u.email as user_email,
-                   a.street_address, a.city, a.state, a.postal_code, a.phone
-            FROM orders o
-            JOIN users u ON o.user_id = u.id
-            JOIN addresses a ON o.address_id = a.id
-            ORDER BY o.created_at DESC
-        ")->fetchAll();
+        try {
+            $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+            
+            // Base query with joins
+            $query = "
+                SELECT o.*, u.name as user_name, u.email as user_email,
+                       a.street_address as shipping_address, a.city as shipping_city, 
+                       a.state as shipping_state, a.postal_code as shipping_zip
+                FROM orders o
+                JOIN users u ON o.user_id = u.id
+                JOIN addresses a ON o.address_id = a.id
+            ";
 
-        require_once __DIR__ . '/../Views/admin/orders.php';
+            // Add search conditions if search term is provided
+            if (!empty($search)) {
+                // Check if search is numeric (likely an order ID)
+                if (is_numeric($search)) {
+                    $query .= " WHERE o.id = ?";
+                    $params = [$search];
+                } else {
+                    $search = "%{$search}%";
+                    $query .= " WHERE (u.name LIKE ? OR o.status LIKE ?)";
+                    $params = [$search, $search];
+                }
+            } else {
+                $params = [];
+            }
+
+            // Add ORDER BY clause
+            $query .= " ORDER BY o.created_at DESC";
+
+            // Prepare and execute the query
+            $stmt = $this->db->prepare($query);
+            if (!empty($params)) {
+                $stmt->execute($params);
+            } else {
+                $stmt->execute();
+            }
+
+            $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Prepare the statement for getting order items once
+            $itemsStmt = $this->db->prepare("
+                SELECT oi.*, p.name, p.image, p.price, s.size
+                FROM order_items oi
+                JOIN products p ON oi.product_id = p.id
+                LEFT JOIN sizes s ON oi.size_id = s.id
+                WHERE oi.order_id = ?
+            ");
+
+            // Get order items for each order
+            foreach ($orders as &$order) {
+                // Initialize items array
+                $order['items'] = [];
+                
+                // Get items for this order
+                $itemsStmt->execute([$order['id']]);
+                $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                if ($items) {
+                    $order['items'] = $items;
+                }
+            }
+
+            require_once __DIR__ . '/../Views/admin/orders.php';
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Error fetching orders: " . $e->getMessage();
+            header('Location: /php-sneakers-store/public/admin');
+            exit;
+        }
     }
 
     public function users() {
-        // Get all users
-        $users = $this->db->query("
-            SELECT * FROM users 
-            ORDER BY created_at DESC
-        ")->fetchAll();
-
-        require_once __DIR__ . '/../Views/admin/users.php';
+        try {
+            $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+            $role = isset($_GET['role']) ? trim($_GET['role']) : '';
+            
+            // Base query
+            $query = "SELECT * FROM users";
+            $params = [];
+            
+            // Build WHERE clause conditions
+            $conditions = [];
+            
+            if (!empty($search)) {
+                $conditions[] = "(name LIKE ? OR email LIKE ?)";
+                $search = "%{$search}%";
+                $params[] = $search;
+                $params[] = $search;
+            }
+            
+            if (!empty($role)) {
+                $conditions[] = "is_admin = ?";
+                $params[] = $role === 'admin' ? 1 : 0;
+            }
+            
+            // Add WHERE clause if there are conditions
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            // Add ORDER BY
+            $query .= " ORDER BY created_at DESC";
+            
+            // Execute query
+            if (!empty($params)) {
+                $stmt = $this->db->prepare($query);
+                $stmt->execute($params);
+            } else {
+                $stmt = $this->db->query($query);
+            }
+            
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            require_once __DIR__ . '/../Views/admin/users.php';
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Error fetching users: " . $e->getMessage();
+            header('Location: /php-sneakers-store/public/admin');
+            exit;
+        }
     }
 
     public function addProduct() {
@@ -102,7 +203,7 @@ class AdminController {
                 $_POST['description'],
                 $_POST['price'],
                 $_POST['image'],
-                $_POST['stock']
+                0 // Initialize stock as 0, will be updated when sizes are added
             ]);
 
             $_SESSION['success'] = 'Product added successfully';
@@ -124,7 +225,7 @@ class AdminController {
         try {
             $stmt = $this->db->prepare("
                 UPDATE products 
-                SET name = ?, description = ?, price = ?, image = ?, stock = ?
+                SET name = ?, description = ?, price = ?, image = ?
                 WHERE id = ?
             ");
             $stmt->execute([
@@ -132,7 +233,6 @@ class AdminController {
                 $_POST['description'],
                 $_POST['price'],
                 $_POST['image'],
-                $_POST['stock'],
                 $_POST['id']
             ]);
 

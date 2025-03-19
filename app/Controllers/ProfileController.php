@@ -82,4 +82,77 @@ class ProfileController {
         header('Location: /php-sneakers-store/public/profile');
         exit;
     }
+
+    public function orderDetails($id) {
+        // Validate order ID
+        if (!is_numeric($id) || $id <= 0) {
+            if ($this->isAjaxRequest()) {
+                header('Content-Type: application/json');
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid order ID']);
+                exit;
+            }
+            $_SESSION['error'] = 'Invalid order ID';
+            header('Location: /php-sneakers-store/public/profile');
+            exit;
+        }
+
+        // Get order details
+        $stmt = $this->db->prepare("
+            SELECT o.*, a.street_address, a.city, a.state, a.postal_code, a.country, a.phone,
+                   u.name as customer_name, u.email as customer_email
+            FROM orders o
+            JOIN addresses a ON o.address_id = a.id
+            JOIN users u ON o.user_id = u.id
+            WHERE o.id = ? AND o.user_id = ?
+        ");
+        $stmt->execute([$id, $_SESSION['user_id']]);
+        $order = $stmt->fetch();
+
+        if (!$order) {
+            if ($this->isAjaxRequest()) {
+                header('Content-Type: application/json');
+                http_response_code(404);
+                echo json_encode(['error' => 'Order not found']);
+                exit;
+            }
+            $_SESSION['error'] = 'Order not found';
+            header('Location: /php-sneakers-store/public/profile');
+            exit;
+        }
+
+        // Get order items with size information
+        $stmt = $this->db->prepare("
+            SELECT oi.*, p.name, p.image, s.size
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            LEFT JOIN sizes s ON oi.size_id = s.id
+            WHERE oi.order_id = ?
+        ");
+        $stmt->execute([$id]);
+        $order_items = $stmt->fetchAll();
+
+        if ($this->isAjaxRequest()) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'id' => $order['id'],
+                'created_at' => $order['created_at'],
+                'status' => $order['status'],
+                'total_amount' => $order['total_amount'],
+                'street_address' => $order['street_address'],
+                'city' => $order['city'],
+                'state' => $order['state'],
+                'postal_code' => $order['postal_code'],
+                'items' => $order_items
+            ]);
+            exit;
+        }
+
+        require_once __DIR__ . '/../Views/profile/order_details.php';
+    }
+
+    private function isAjaxRequest() {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+               strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
 } 

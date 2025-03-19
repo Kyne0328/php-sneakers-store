@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orders>
+    <view>
+        <modal>
+            <fields>
+                <field id="order_id" type="text"/>
+                <field id="created_at" type="datetime"/>
+                <field id="order_status" type="badge"/>
+                <field id="shipping_address" type="address"/>
+                <field id="order_items" type="table"/>
+            </fields>
+        </modal>
+        <statusColors>
+            <color status="pending">warning</color>
+            <color status="processing">info</color>
+            <color status="shipped">primary</color>
+            <color status="delivered">success</color>
+            <color status="cancelled">danger</color>
+        </statusColors>
+    </view>
+</orders> 

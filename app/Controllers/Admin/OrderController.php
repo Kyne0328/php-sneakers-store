@@ -26,8 +26,8 @@ class OrderController {
             // First, get all orders with user and address information
             $query = "
                 SELECT o.*, u.name as user_name, u.email as user_email,
-                       a.street as shipping_address, a.city as shipping_city, 
-                       a.state as shipping_state, a.zip as shipping_zip
+                       a.street_address as shipping_address, a.city as shipping_city, 
+                       a.state as shipping_state, a.postal_code as shipping_zip
                 FROM orders o
                 JOIN users u ON o.user_id = u.id
                 JOIN addresses a ON o.address_id = a.id
@@ -38,9 +38,10 @@ class OrderController {
 
             // Prepare the statement for getting order items once
             $itemsStmt = $this->db->prepare("
-                SELECT oi.*, p.name, p.image, p.price
+                SELECT oi.*, p.name, p.image, p.price, s.size
                 FROM order_items oi
                 JOIN products p ON oi.product_id = p.id
+                LEFT JOIN sizes s ON oi.size_id = s.id
                 WHERE oi.order_id = ?
             ");
 

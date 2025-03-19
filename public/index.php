@@ -45,6 +45,7 @@ $router->get('/logout', 'App\Controllers\AuthController@logout');
 // Profile routes
 $router->get('/profile', 'App\Controllers\ProfileController@index');
 $router->post('/profile/update', 'App\Controllers\ProfileController@update');
+$router->get('/profile/order/{id}', 'App\Controllers\ProfileController@orderDetails');
 
 // Checkout routes
 $router->get('/checkout', 'App\Controllers\CheckoutController@index');
@@ -58,6 +59,12 @@ $router->get('/admin/products', 'App\Controllers\Admin\ProductController@index')
 $router->post('/admin/products/create', 'App\Controllers\Admin\ProductController@create');
 $router->post('/admin/products/update', 'App\Controllers\Admin\ProductController@update');
 $router->post('/admin/products/delete', 'App\Controllers\Admin\ProductController@delete');
+
+// Admin Size routes
+$router->get('/admin/products/{id}/sizes', 'App\Controllers\Admin\ProductController@getSizes');
+$router->post('/admin/sizes/add', 'App\Controllers\Admin\ProductController@addSize');
+$router->post('/admin/sizes/update', 'App\Controllers\Admin\ProductController@updateSize');
+$router->post('/admin/sizes/delete', 'App\Controllers\Admin\ProductController@deleteSize');
 
 // Admin Order routes
 $router->get('/admin/orders', 'App\Controllers\AdminController@orders');

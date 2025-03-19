@@ -27,6 +27,7 @@
                             <thead>
                                 <tr>
                                     <th>Product</th>
+                                    <th>Size</th>
                                     <th>Price</th>
                                     <th>Quantity</th>
                                     <th>Subtotal</th>
@@ -44,26 +45,27 @@
                                                 <span><?php echo $item['name']; ?></span>
                                             </div>
                                         </td>
-                                        <td>$<?php echo number_format($item['price'], 2); ?></td>
+                                        <td><?php echo $item['size'] ?: 'N/A'; ?></td>
+                                        <td>₱<?php echo number_format($item['price'], 2); ?></td>
                                         <td><?php echo $item['quantity']; ?></td>
-                                        <td>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
+                                        <td>₱<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                                    <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                    <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                                    <td>₱<?php echo number_format($order['total_amount'], 2); ?></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3" class="text-end"><strong>Shipping:</strong></td>
-                                    <td><?php echo $order['total_amount'] >= 100 ? 'Free' : '$10.00'; ?></td>
+                                    <td colspan="4" class="text-end"><strong>Shipping:</strong></td>
+                                    <td><?php echo $order['total_amount'] >= 100 ? 'Free' : '₱10.00'; ?></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                    <td colspan="4" class="text-end"><strong>Total:</strong></td>
                                     <td>
                                         <strong>
-                                            $<?php echo number_format(
+                                            ₱<?php echo number_format(
                                                 $order['total_amount'] >= 100 
                                                     ? $order['total_amount'] 
                                                     : $order['total_amount'] + 10, 
@@ -102,7 +104,7 @@
             <div class="card shadow">
                 <div class="card-body">
                     <h5 class="card-title mb-4">Order Status</h5>
-                    <form action="/php-sneakers-store/public/admin/order/status" method="POST">
+                    <form action="/php-sneakers-store/public/admin/update-order-status" method="POST">
                         <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
                         <div class="mb-3">
                             <select name="status" class="form-select">

@@ -5,8 +5,8 @@
         <?php require_once __DIR__ . '/../partials/admin_sidebar.php'; ?>
 
         <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <main class="col-md-9 col-lg-10 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-4 pb-3 mb-3 border-bottom">
                 <h1 class="h2">Products</h1>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
                     <i class="bi bi-plus-lg"></i> Add New Product
@@ -62,7 +62,7 @@
                                     <th>Image</th>
                                     <th>Name</th>
                                     <th>Price</th>
-                                    <th>Stock</th>
+                                    <th>Total Stock</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -76,7 +76,7 @@
                                                  style="width: 50px; height: 50px; object-fit: cover;">
                                         </td>
                                         <td><?php echo htmlspecialchars($product['name']); ?></td>
-                                        <td>$<?php echo number_format($product['price'], 2); ?></td>
+                                        <td>₱<?php echo number_format($product['price'], 2); ?></td>
                                         <td><?php echo htmlspecialchars($product['stock']); ?></td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-primary edit-product" 
@@ -86,9 +86,15 @@
                                                     data-name="<?php echo htmlspecialchars($product['name']); ?>"
                                                     data-description="<?php echo htmlspecialchars($product['description']); ?>"
                                                     data-price="<?php echo $product['price']; ?>"
-                                                    data-stock="<?php echo $product['stock']; ?>"
                                                     data-image="<?php echo htmlspecialchars($product['image']); ?>">
                                                 <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-info manage-sizes" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#manageSizesModal"
+                                                    data-id="<?php echo $product['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($product['name']); ?>">
+                                                <i class="bi bi-rulers"></i>
                                             </button>
                                             <button type="button" class="btn btn-sm btn-danger delete-product" 
                                                     data-bs-toggle="modal" 
@@ -167,9 +173,8 @@
                             <img id="edit_current_image" src="" alt="Current product image" class="img-thumbnail" style="max-width: 150px;">
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit_stock" class="form-label">Stock</label>
-                        <input type="number" class="form-control" id="edit_stock" name="stock" required>
+                    <div class="alert alert-info">
+                        <small><i class="bi bi-info-circle"></i> Total stock is automatically calculated based on the combined stock of all sizes. Use the size management tool to manage stock levels.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -208,9 +213,8 @@
                         <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
                         <div class="form-text">Supported formats: JPG, PNG, GIF. Max size: 5MB</div>
                     </div>
-                    <div class="mb-3">
-                        <label for="stock" class="form-label">Stock</label>
-                        <input type="number" class="form-control" id="stock" name="stock" required>
+                    <div class="alert alert-info">
+                        <small><i class="bi bi-info-circle"></i> After adding the product, you can manage sizes and stock levels using the size management tool.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -231,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = this.dataset.name;
             const description = this.dataset.description;
             const price = this.dataset.price;
-            const stock = this.dataset.stock;
             const image = this.dataset.image;
 
             // Populate the edit modal with product data
@@ -239,7 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_description').value = description;
             document.getElementById('edit_price').value = price;
-            document.getElementById('edit_stock').value = stock;
             document.getElementById('edit_current_image').src = image;
         });
     });
@@ -278,6 +280,242 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             document.getElementById('delete_product_error').classList.remove('d-none');
+        }
+    });
+    
+    // --- Size Management ---
+    // References
+    const sizesModal = document.getElementById('manageSizesModal');
+    const sizesError = document.getElementById('sizes_error');
+    const sizesSuccess = document.getElementById('sizes_success');
+    const sizesTableBody = document.getElementById('sizes_table_body');
+    const sizeAddForm = document.getElementById('add_size_form');
+    const addSizeBtn = document.getElementById('add_new_size_btn');
+    const cancelAddSizeBtn = document.getElementById('cancel_add_size');
+    const addSizeProductIdInput = document.getElementById('add_size_product_id');
+    const editSizeIdInput = document.getElementById('edit_size_id');
+    const editSizeNameInput = document.getElementById('edit_size_name');
+    const editSizeStockInput = document.getElementById('edit_size_stock');
+    const deleteSizeIdInput = document.getElementById('delete_size_id');
+    const deleteSizeNameSpan = document.getElementById('delete_size_name');
+    
+    let currentProductId = null;
+    
+    // Show/hide size form
+    addSizeBtn.addEventListener('click', function() {
+        sizeAddForm.classList.remove('d-none');
+        addSizeBtn.classList.add('d-none');
+    });
+    
+    cancelAddSizeBtn.addEventListener('click', function() {
+        sizeAddForm.classList.add('d-none');
+        addSizeBtn.classList.remove('d-none');
+    });
+    
+    // Handle size management button clicks
+    document.querySelectorAll('.manage-sizes').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            
+            // Reset form and messages
+            sizesError.classList.add('d-none');
+            sizesSuccess.classList.add('d-none');
+            sizeAddForm.classList.add('d-none');
+            addSizeBtn.classList.remove('d-none');
+            document.getElementById('sizeAddForm').reset();
+            
+            // Set product info
+            document.getElementById('size_product_name').textContent = name;
+            addSizeProductIdInput.value = id;
+            currentProductId = id;
+            
+            // Load sizes
+            loadSizes(id);
+        });
+    });
+    
+    // Load sizes for a product
+    async function loadSizes(productId) {
+        try {
+            sizesTableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading sizes...</td></tr>';
+            
+            const response = await fetch(`/php-sneakers-store/public/admin/products/${productId}/sizes`);
+            const data = await response.json();
+            
+            if (data.error) {
+                sizesError.textContent = data.message;
+                sizesError.classList.remove('d-none');
+                sizesTableBody.innerHTML = '<tr><td colspan="3" class="text-center">Failed to load sizes</td></tr>';
+                return;
+            }
+            
+            // Render sizes
+            if (data.sizes.length === 0) {
+                sizesTableBody.innerHTML = '<tr><td colspan="3" class="text-center">No sizes added yet</td></tr>';
+            } else {
+                sizesTableBody.innerHTML = '';
+                
+                data.sizes.forEach(size => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${size.size}</td>
+                        <td>${size.stock}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-primary edit-size" 
+                                    data-id="${size.id}"
+                                    data-size="${size.size}"
+                                    data-stock="${size.stock}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger delete-size" 
+                                    data-id="${size.id}"
+                                    data-size="${size.size}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    sizesTableBody.appendChild(tr);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                sizesTableBody.querySelectorAll('.edit-size').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        editSizeIdInput.value = this.dataset.id;
+                        editSizeNameInput.value = this.dataset.size;
+                        editSizeStockInput.value = this.dataset.stock;
+                        
+                        new bootstrap.Modal(document.getElementById('editSizeModal')).show();
+                    });
+                });
+                
+                sizesTableBody.querySelectorAll('.delete-size').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        deleteSizeIdInput.value = this.dataset.id;
+                        deleteSizeNameSpan.textContent = this.dataset.size;
+                        
+                        new bootstrap.Modal(document.getElementById('deleteSizeModal')).show();
+                    });
+                });
+            }
+        } catch (error) {
+            console.error("Error loading sizes:", error);
+            sizesTableBody.innerHTML = '<tr><td colspan="3" class="text-center">Failed to load sizes</td></tr>';
+        }
+    }
+    
+    // Add Size Form Submission
+    document.getElementById('sizeAddForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const formData = new FormData(this);
+            
+            const response = await fetch('/php-sneakers-store/public/admin/sizes/add', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.error) {
+                sizesError.textContent = result.message;
+                sizesError.classList.remove('d-none');
+                sizesSuccess.classList.add('d-none');
+            } else {
+                sizesSuccess.textContent = result.message;
+                sizesSuccess.classList.remove('d-none');
+                sizesError.classList.add('d-none');
+                
+                // Reset form and hide it
+                this.reset();
+                sizeAddForm.classList.add('d-none');
+                addSizeBtn.classList.remove('d-none');
+                
+                // Reload sizes
+                loadSizes(currentProductId);
+            }
+        } catch (error) {
+            console.error("Error adding size:", error);
+            sizesError.textContent = "An error occurred while adding the size";
+            sizesError.classList.remove('d-none');
+            sizesSuccess.classList.add('d-none');
+        }
+    });
+    
+    // Edit Size Form Submission
+    document.getElementById('sizeEditForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const formData = new FormData(this);
+            
+            const response = await fetch('/php-sneakers-store/public/admin/sizes/update', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.error) {
+                sizesError.textContent = result.message;
+                sizesError.classList.remove('d-none');
+                sizesSuccess.classList.add('d-none');
+            } else {
+                sizesSuccess.textContent = result.message;
+                sizesSuccess.classList.remove('d-none');
+                sizesError.classList.add('d-none');
+                
+                // Hide modal
+                const editSizeModal = bootstrap.Modal.getInstance(document.getElementById('editSizeModal'));
+                editSizeModal.hide();
+                
+                // Reload sizes
+                loadSizes(currentProductId);
+            }
+        } catch (error) {
+            console.error("Error updating size:", error);
+            sizesError.textContent = "An error occurred while updating the size";
+            sizesError.classList.remove('d-none');
+            sizesSuccess.classList.add('d-none');
+        }
+    });
+    
+    // Delete Size Form Submission
+    document.getElementById('sizeDeleteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const formData = new FormData(this);
+            
+            const response = await fetch('/php-sneakers-store/public/admin/sizes/delete', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.error) {
+                sizesError.textContent = result.message;
+                sizesError.classList.remove('d-none');
+                sizesSuccess.classList.add('d-none');
+            } else {
+                sizesSuccess.textContent = result.message;
+                sizesSuccess.classList.remove('d-none');
+                sizesError.classList.add('d-none');
+                
+                // Hide modal
+                const deleteSizeModal = bootstrap.Modal.getInstance(document.getElementById('deleteSizeModal'));
+                deleteSizeModal.hide();
+                
+                // Reload sizes
+                loadSizes(currentProductId);
+            }
+        } catch (error) {
+            console.error("Error deleting size:", error);
+            sizesError.textContent = "An error occurred while deleting the size";
+            sizesError.classList.remove('d-none');
+            sizesSuccess.classList.add('d-none');
         }
     });
 });
@@ -339,6 +577,182 @@ main {
     margin: 1.75rem auto;
     max-width: 500px;
 }
+
+.card {
+    border: none;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.table th {
+    font-weight: 500;
+    color: #495057;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+@media (min-width: 768px) {
+    main {
+        margin-left: 0 !important;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto !important;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .col-md-9.col-lg-10 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .container-fluid .row > .col-md-9.col-lg-10 {
+        margin: 0 auto;
+    }
+}
+
+.container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.row {
+    margin-left: 0;
+    margin-right: 0;
+    justify-content: center;
+}
 </style>
+
+<!-- Manage Sizes Modal -->
+<div class="modal fade" id="manageSizesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Sizes: <span id="size_product_name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="sizes_error" class="alert alert-danger d-none"></div>
+                <div id="sizes_success" class="alert alert-success d-none"></div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <h6>Available Sizes</h6>
+                    <button type="button" class="btn btn-sm btn-primary" id="add_new_size_btn">
+                        <i class="bi bi-plus-lg"></i> Add New Size
+                    </button>
+                </div>
+                
+                <div id="add_size_form" class="card mb-3 d-none">
+                    <div class="card-body">
+                        <h6 class="card-title">Add New Size</h6>
+                        <form id="sizeAddForm">
+                            <input type="hidden" id="add_size_product_id" name="product_id">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="add_size_name" class="form-label">Size (e.g. "US 8")</label>
+                                    <input type="text" class="form-control" id="add_size_name" name="size" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="add_size_stock" class="form-label">Stock</label>
+                                    <input type="number" class="form-control" id="add_size_stock" name="stock" min="0" required>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-secondary me-2" id="cancel_add_size">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Size</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="sizes_table">
+                        <thead>
+                            <tr>
+                                <th>Size</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sizes_table_body">
+                            <tr>
+                                <td colspan="3" class="text-center">Loading sizes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle"></i> Note: The product's total stock is automatically calculated from all size variants.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Size Modal -->
+<div class="modal fade" id="editSizeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Size</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="sizeEditForm">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_size_id" name="size_id">
+                    <div class="mb-3">
+                        <label for="edit_size_name" class="form-label">Size</label>
+                        <input type="text" class="form-control" id="edit_size_name" name="size" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_size_stock" class="form-label">Stock</label>
+                        <input type="number" class="form-control" id="edit_size_stock" name="stock" min="0" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Size</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Size Modal -->
+<div class="modal fade" id="deleteSizeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Size</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the size "<span id="delete_size_name"></span>"?</p>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="sizeDeleteForm">
+                    <input type="hidden" id="delete_size_id" name="size_id">
+                    <button type="submit" class="btn btn-danger">Delete Size</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require_once __DIR__ . '/../partials/footer.php'; ?> 

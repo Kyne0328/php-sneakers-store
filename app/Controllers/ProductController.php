@@ -3,14 +3,17 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Models\Product;
 use PDO;
 use PDOException;
 
 class ProductController {
     private $db;
+    private $productModel;
 
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
+        $this->productModel = new Product();
         session_start();
     }
 
@@ -61,6 +64,17 @@ class ProductController {
                 $_SESSION['error'] = "Product not found.";
                 header('Location: /php-sneakers-store/public/products');
                 exit;
+            }
+            
+            // Get available sizes for the product
+            $product_sizes = $this->productModel->getProductSizes($id);
+            
+            // Debug log for sizes
+            error_log("Product ID: $id - Found " . count($product_sizes) . " sizes");
+            
+            // If no sizes are available, add an error message
+            if (empty($product_sizes)) {
+                $_SESSION['error'] = "No sizes available for this product.";
             }
 
             // Get related products (optional)

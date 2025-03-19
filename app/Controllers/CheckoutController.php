@@ -136,9 +136,10 @@ class CheckoutController {
 
             // Get cart items from database first
             $cart_items = $this->db->prepare("
-                SELECT c.*, p.name, p.price, p.stock
+                SELECT c.*, p.name, p.price, p.stock, s.size, s.stock as size_stock
                 FROM cart c
                 JOIN products p ON c.product_id = p.id
+                JOIN sizes s ON c.size_id = s.id
                 WHERE c.user_id = ?
             ");
             $cart_items->execute([$_SESSION['user_id']]);
@@ -146,21 +147,51 @@ class CheckoutController {
 
             // If no items in database cart, use session cart
             if (empty($items) && !empty($_SESSION['cart'])) {
-                $placeholders = str_repeat('?,', count($_SESSION['cart']) - 1) . '?';
-                $stmt = $this->db->prepare("SELECT * FROM products WHERE id IN ($placeholders)");
-                $stmt->execute(array_keys($_SESSION['cart']));
-                $products = $stmt->fetchAll();
-
-                $items = [];
-                foreach ($products as $product) {
-                    if (isset($_SESSION['cart'][$product['id']])) {
-                        $items[] = [
-                            'product_id' => $product['id'],
-                            'name' => $product['name'],
-                            'price' => $product['price'],
-                            'quantity' => $_SESSION['cart'][$product['id']],
-                            'stock' => $product['stock']
-                        ];
+                // Session cart now uses product_id_size_id keys
+                $product_ids = [];
+                $size_ids = [];
+                
+                foreach ($_SESSION['cart'] as $key => $quantity) {
+                    list($product_id, $size_id) = explode('_', $key);
+                    $product_ids[] = $product_id;
+                    $size_ids[] = $size_id;
+                }
+                
+                if (!empty($product_ids)) {
+                    $product_placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
+                    $stmt = $this->db->prepare("SELECT * FROM products WHERE id IN ($product_placeholders)");
+                    $stmt->execute($product_ids);
+                    $products = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                    
+                    $size_placeholders = str_repeat('?,', count($size_ids) - 1) . '?';
+                    $size_stmt = $this->db->prepare("SELECT * FROM sizes WHERE id IN ($size_placeholders)");
+                    $size_stmt->execute($size_ids);
+                    $sizes = [];
+                    
+                    foreach ($size_stmt->fetchAll() as $size) {
+                        $sizes[$size['id']] = $size;
+                    }
+                    
+                    $items = [];
+                    foreach ($_SESSION['cart'] as $key => $quantity) {
+                        list($product_id, $size_id) = explode('_', $key);
+                        
+                        // Find the product
+                        foreach ($products as $product) {
+                            if ($product['id'] == $product_id && isset($sizes[$size_id])) {
+                                $items[] = [
+                                    'product_id' => $product['id'],
+                                    'size_id' => $size_id,
+                                    'name' => $product['name'],
+                                    'price' => $product['price'],
+                                    'quantity' => $quantity,
+                                    'stock' => $product['stock'],
+                                    'size' => $sizes[$size_id]['size'],
+                                    'size_stock' => $sizes[$size_id]['stock']
+                                ];
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -192,19 +223,20 @@ class CheckoutController {
 
             // Create order items and update product stock
             foreach ($items as $item) {
-                // Check if enough stock
-                if ($item['stock'] < $item['quantity']) {
-                    throw new Exception("Not enough stock for {$item['name']}");
+                // Check if enough stock in the specific size
+                if ($item['size_stock'] < $item['quantity']) {
+                    throw new Exception("Not enough stock for {$item['name']} in size {$item['size']}");
                 }
 
                 // Create order item
                 $create_order_item = $this->db->prepare("
-                    INSERT INTO order_items (order_id, product_id, quantity, price)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO order_items (order_id, product_id, size_id, quantity, price)
+                    VALUES (?, ?, ?, ?, ?)
                 ");
                 $create_order_item->execute([
                     $order_id,
                     $item['product_id'],
+                    $item['size_id'],
                     $item['quantity'],
                     $item['price']
                 ]);
@@ -216,6 +248,14 @@ class CheckoutController {
                     WHERE id = ?
                 ");
                 $update_stock->execute([$item['quantity'], $item['product_id']]);
+                
+                // Update size stock
+                $update_size_stock = $this->db->prepare("
+                    UPDATE sizes
+                    SET stock = stock - ?
+                    WHERE id = ?
+                ");
+                $update_size_stock->execute([$item['quantity'], $item['size_id']]);
             }
 
             // Clear cart

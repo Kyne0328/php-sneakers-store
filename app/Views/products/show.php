@@ -38,8 +38,8 @@
                     <p class="text-muted mb-4"><?php echo htmlspecialchars($product['description']); ?></p>
                     
                     <div class="mb-4">
-                        <h3 class="text-primary mb-0">$<?php echo number_format($product['price'], 2); ?></h3>
-                        <small class="text-muted">Free shipping on orders over $100</small>
+                        <h3 class="text-primary mb-0">₱<?php echo number_format($product['price'], 2); ?></h3>
+                        <small class="text-muted">Free shipping on orders over ₱100</small>
                     </div>
 
                     <div class="mb-4">
@@ -57,6 +57,25 @@
                                 <form action="/php-sneakers-store/public/cart/add" method="POST">
                                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                                     <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                                    
+                                    <div class="row g-3 align-items-center mb-3">
+                                        <div class="col-auto">
+                                            <label for="size" class="form-label">Size:</label>
+                                        </div>
+                                        <div class="col-auto">
+                                            <select id="size" name="size_id" class="form-select" required>
+                                                <option value="">Select Size</option>
+                                                <?php if (!empty($product_sizes)): ?>
+                                                    <?php foreach ($product_sizes as $size): ?>
+                                                        <option value="<?php echo $size['id']; ?>"><?php echo htmlspecialchars($size['size']); ?> (<?php echo $size['stock']; ?> available)</option>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <option value="" disabled>No sizes available</option>
+                                                <?php endif; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="row g-3 align-items-center">
                                         <div class="col-auto">
                                             <label for="quantity" class="form-label">Quantity:</label>
@@ -108,7 +127,7 @@
                                 <h5 class="card-title text-dark"><?php echo htmlspecialchars($related['name']); ?></h5>
                                 <p class="card-text text-muted"><?php echo htmlspecialchars(substr($related['description'], 0, 100)) . '...'; ?></p>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="h5 mb-0 text-dark">$<?php echo number_format($related['price'], 2); ?></span>
+                                    <span class="h5 mb-0 text-dark">₱<?php echo number_format($related['price'], 2); ?></span>
                                     <span class="badge bg-success">In Stock</span>
                                 </div>
                             </div>

@@ -44,6 +44,7 @@
                                 <label for="stock" class="form-label">Stock</label>
                                 <input type="number" class="form-control" id="stock" name="stock" 
                                        value="<?php echo $product['stock']; ?>" min="0" required>
+                                <small class="text-muted">This is calculated from size variants. You can manage sizes from the products page.</small>
                             </div>
                         </div>
 
