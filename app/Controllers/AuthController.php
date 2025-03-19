@@ -64,7 +64,7 @@ class AuthController {
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $this->sanitizeInput($user['name']);
-            $_SESSION['is_admin'] = $user['is_admin'];
+            $_SESSION['is_admin'] = isset($user['is_admin']) ? (int)$user['is_admin'] : 0;
             
             // Regenerate session ID to prevent session fixation
             session_regenerate_id(true);
@@ -78,7 +78,7 @@ class AuthController {
             }
             
             // Default redirect based on user role
-            header('Location: ' . ($user['is_admin'] ? '/php-sneakers-store/public/admin' : '/php-sneakers-store/public/'));
+            header('Location: ' . ($_SESSION['is_admin'] ? '/php-sneakers-store/public/admin' : '/php-sneakers-store/public/'));
             exit;
         }
 
@@ -135,7 +135,7 @@ class AuthController {
 
         // Create user
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $this->db->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)");
         
         if ($stmt->execute([$name, $email, $hashedPassword])) {
             $_SESSION['success'] = 'Registration successful! Please login.';

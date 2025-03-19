@@ -49,7 +49,9 @@
                 </div>
                 <div class="col-md-3">
                     <form action="/php-sneakers-store/public/admin/users" method="GET" class="d-flex">
-                        <input type="hidden" name="search" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        <?php if(isset($_GET['search']) && !empty($_GET['search'])): ?>
+                            <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
+                        <?php endif; ?>
                         <select name="role" class="form-select" onchange="this.form.submit()">
                             <option value="">All Roles</option>
                             <option value="admin" <?php echo isset($_GET['role']) && $_GET['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
@@ -157,7 +159,7 @@
                 <h5 class="modal-title">Update User Status</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/php-sneakers-store/public/admin/update-user-status" method="POST">
+            <form action="/php-sneakers-store/public/admin/toggle-admin" method="POST">
                 <div class="modal-body">
                     <input type="hidden" name="user_id" id="update_user_id">
                     <div class="mb-3">

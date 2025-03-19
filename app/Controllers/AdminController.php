@@ -183,8 +183,8 @@ class AdminController {
             $search = isset($_GET['search']) ? trim($_GET['search']) : '';
             $role = isset($_GET['role']) ? trim($_GET['role']) : '';
             
-            // Base query
-            $query = "SELECT * FROM users";
+            // Base query - Add COALESCE to handle NULL is_admin values
+            $query = "SELECT id, name, email, COALESCE(is_admin, 0) as is_admin, created_at, updated_at FROM users";
             $params = [];
             
             // Build WHERE clause conditions
@@ -192,13 +192,12 @@ class AdminController {
             
             if (!empty($search)) {
                 $conditions[] = "(name LIKE ? OR email LIKE ?)";
-                $search = "%{$search}%";
-                $params[] = $search;
-                $params[] = $search;
+                $params[] = "%{$search}%";
+                $params[] = "%{$search}%";
             }
             
             if (!empty($role)) {
-                $conditions[] = "is_admin = ?";
+                $conditions[] = "COALESCE(is_admin, 0) = ?";
                 $params[] = $role === 'admin' ? 1 : 0;
             }
             
@@ -211,11 +210,11 @@ class AdminController {
             $query .= " ORDER BY created_at DESC";
             
             // Execute query
+            $stmt = $this->db->prepare($query);
             if (!empty($params)) {
-                $stmt = $this->db->prepare($query);
                 $stmt->execute($params);
             } else {
-                $stmt = $this->db->query($query);
+                $stmt->execute();
             }
             
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -343,14 +342,13 @@ class AdminController {
         }
 
         try {
-            // Get current admin status
-            $stmt = $this->db->prepare("SELECT is_admin FROM users WHERE id = ?");
-            $stmt->execute([$_POST['user_id']]);
-            $current_status = $stmt->fetchColumn();
-
-            // Toggle admin status
+            // Use the provided is_admin value directly
+            $user_id = $_POST['user_id'];
+            $is_admin = isset($_POST['is_admin']) ? (int)$_POST['is_admin'] : 0;
+            
+            // Update user admin status
             $stmt = $this->db->prepare("UPDATE users SET is_admin = ? WHERE id = ?");
-            $stmt->execute([!$current_status, $_POST['user_id']]);
+            $stmt->execute([$is_admin, $user_id]);
 
             $_SESSION['success'] = 'User admin status updated successfully';
         } catch (\PDOException $e) {
