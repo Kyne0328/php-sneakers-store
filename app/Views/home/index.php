@@ -1,124 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sneaker House</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <img src="/php-sneakers-store/images/logo.png" alt="Sneaker House Logo" height="40">
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fa-solid fa-house"></i> Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/products"><i class="fa-solid fa-shoe-prints"></i> Products</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/cart">
-                            <i class="fa-solid fa-cart-shopping"></i> Cart
-                            <?php if (isset($_SESSION['cart_count']) && $_SESSION['cart_count'] > 0): ?>
-                                <span class="badge bg-danger"><?php echo $_SESSION['cart_count']; ?></span>
-                            <?php endif; ?>
-                        </a>
-                    </li>
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/profile"><i class="fa-solid fa-user"></i> Profile</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-                        </li>
-                    <?php else: ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/login"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/register"><i class="fa-solid fa-user-plus"></i> Register</a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<?php require_once __DIR__ . '/../partials/header.php'; ?>
 
-    <div class="bg-light py-2 mb-4">
-        <div class="container">
-            <div class="row text-center">
-                <div class="col-md-4 mb-2 mb-md-0">
-                    <i class="fa-solid fa-truck text-primary"></i>
-                    <span class="ms-2">Free Shipping</span>
-                </div>
-                <div class="col-md-4 mb-2 mb-md-0">
-                    <i class="fa-solid fa-rotate-left text-primary"></i>
-                    <span class="ms-2">Easy Returns</span>
-                </div>
-                <div class="col-md-4">
-                    <i class="fa-solid fa-shield-halved text-primary"></i>
-                    <span class="ms-2">Secure Payment</span>
-                </div>
+<div class="container-fluid p-0">
+    <!-- Hero Section -->
+    <div class="hero-section text-center py-5 mb-4" style="background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/php-sneakers-store/public/images/hero-sneakers.jpg'); background-size: cover; background-position: center;">
+        <div class="container px-4 px-lg-5 my-5">
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder">Step into Style</h1>
+                <p class="lead fw-normal text-white-50 mb-4">Discover our latest collection of premium sneakers</p>
+                <a href="/php-sneakers-store/public/products" class="btn btn-primary btn-lg">
+                    Shop Now <i class="fas fa-arrow-right ms-2"></i>
+                </a>
             </div>
         </div>
     </div>
 
-    <main class="container py-4">
-        <?php if (isset($_SESSION['flash_message'])): ?>
-            <div class="alert alert-<?php echo $_SESSION['flash_type']; ?> alert-dismissible fade show">
-                <?php 
-                echo $_SESSION['flash_message'];
-                unset($_SESSION['flash_message']);
-                unset($_SESSION['flash_type']);
-                ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+    <!-- Featured Products -->
+    <div class="container my-5">
+        <h2 class="text-center mb-4">Featured Products</h2>
+        <div class="row">
+            <?php foreach ($featured_products as $product): ?>
+                <div class="col-md-4 mb-4">
+                    <a href="/php-sneakers-store/public/product/<?php echo $product['id']; ?>" class="text-decoration-none">
+                        <div class="card h-100 product-card shadow-sm">
+                            <img src="<?php echo $product['image']; ?>" class="card-img-top" alt="<?php echo $product['name']; ?>">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title text-dark"><?php echo $product['name']; ?></h5>
+                                <p class="card-text text-muted flex-grow-1"><?php echo $product['description']; ?></p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="h5 mb-0 text-dark">₱<?php echo number_format($product['price'], 2); ?></span>
+                                    <span class="badge bg-<?php echo $product['stock'] > 0 ? 'success' : 'danger'; ?>">
+                                        <?php echo $product['stock'] > 0 ? 'In Stock' : 'Out of Stock'; ?>
+                                    </span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">Click to view details & select size</small>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
 
-        <?php include $content; ?>
-    </main>
-
-    <footer class="bg-dark text-light py-4 mt-auto">
+    <!-- Features Section -->
+    <section class="py-5 bg-light">
         <div class="container">
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-4">
-                    <h5><i class="fa-solid fa-store"></i> About Us</h5>
-                    <p>Your premier destination for the latest and greatest sneakers.</p>
+                    <div class="card border-0 text-center h-100 shadow-sm">
+                        <div class="card-body">
+                            <i class="bi bi-truck fs-1 text-primary mb-3"></i>
+                            <h5 class="card-title">Free Shipping</h5>
+                            <p class="card-text text-muted">Free shipping on orders over ₱100</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <h5><i class="fa-solid fa-link"></i> Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="/products" class="text-light"><i class="fa-solid fa-shoe-prints"></i> Products</a></li>
-                        <li><a href="/contact" class="text-light"><i class="fa-solid fa-envelope"></i> Contact</a></li>
-                        <li><a href="/terms" class="text-light"><i class="fa-solid fa-file-contract"></i> Terms & Conditions</a></li>
-                    </ul>
+                    <div class="card border-0 text-center h-100 shadow-sm">
+                        <div class="card-body">
+                            <i class="bi bi-arrow-repeat fs-1 text-primary mb-3"></i>
+                            <h5 class="card-title">Easy Returns</h5>
+                            <p class="card-text text-muted">30-day return policy</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <h5><i class="fa-solid fa-address-card"></i> Contact Us</h5>
-                    <p><i class="fa-solid fa-envelope"></i> Email: info@sneakerhouse.com<br>
-                    <i class="fa-solid fa-phone"></i> Phone: (555) 123-4567</p>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col text-center">
-                    <p class="mb-0">&copy; <?php echo date('Y'); ?> Sneaker House. All rights reserved.</p>
+                    <div class="card border-0 text-center h-100 shadow-sm">
+                        <div class="card-body">
+                            <i class="bi bi-chat-dots fs-1 text-primary mb-3"></i>
+                            <h5 class="card-title">24/7 Support</h5>
+                            <p class="card-text text-muted">Customer service excellence</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </footer>
+    </section>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/main.js"></script>
-</body>
-</html> 
+<?php require_once __DIR__ . '/../partials/footer.php'; ?> 

@@ -71,16 +71,7 @@ class AdminController {
             // Prepare array to hold all order data
             $allOrders = [];
             
-            // First, explicitly add order #1 (this ensures it's always included)
-            $order1Stmt = $this->db->prepare("SELECT * FROM orders WHERE id = 1");
-            $order1Stmt->execute();
-            $order1 = $order1Stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($order1) {
-                $allOrders[] = $order1;
-            }
-            
-            // Now fetch all other orders
+            // Fetch orders based on search criteria or get all orders
             if (!empty($search)) {
                 // Search case
                 if (is_numeric($search)) {
@@ -89,37 +80,31 @@ class AdminController {
                     $stmt->execute([$search]);
                 } else {
                     // Need to join with users for name search
-                    $stmt = $this->db->prepare("
+                    $query = "
                         SELECT o.*
                         FROM orders o
                         JOIN users u ON o.user_id = u.id
-                        WHERE u.name LIKE ? OR o.status LIKE ?
-                    ");
-                    $stmt->execute(["%{$search}%", "%{$search}%"]);
+                        WHERE (u.name LIKE ? 
+                          OR LOWER(o.status) LIKE LOWER(?) 
+                          OR LOWER(o.payment_status) LIKE LOWER(?))
+                    ";
+                    $stmt = $this->db->prepare($query);
+                    $searchTerm = "%{$search}%";
+                    $params = [$searchTerm, $searchTerm, $searchTerm];
+                    
+                    // Log the query for debugging
+                    error_log("Search query: " . $query);
+                    error_log("Search parameters: " . implode(", ", $params));
+                    
+                    $stmt->execute($params);
                 }
             } else {
-                // No search - get all orders except #1 (since we already added it)
-                $stmt = $this->db->prepare("SELECT * FROM orders WHERE id != 1 ORDER BY id DESC");
+                // No search - get all orders
+                $stmt = $this->db->prepare("SELECT * FROM orders ORDER BY id DESC");
                 $stmt->execute();
             }
             
-            $otherOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Add other orders to our array
-            foreach ($otherOrders as $order) {
-                $allOrders[] = $order;
-            }
-            
-            // Remove duplicates
-            $uniqueOrders = [];
-            $seenIds = [];
-            foreach ($allOrders as $order) {
-                if (!in_array($order['id'], $seenIds)) {
-                    $uniqueOrders[] = $order;
-                    $seenIds[] = $order['id'];
-                }
-            }
-            $allOrders = $uniqueOrders;
+            $allOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             // Sort by ID in descending order
             usort($allOrders, function($a, $b) {
@@ -173,6 +158,7 @@ class AdminController {
             require_once __DIR__ . '/../Views/admin/orders.php';
         } catch (PDOException $e) {
             $_SESSION['error'] = "Error fetching orders: " . $e->getMessage();
+            error_log("Orders search error: " . $e->getMessage());
             header('Location: /php-sneakers-store/public/admin');
             exit;
         }
